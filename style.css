@@ -1,0 +1,13 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #87CEEB; /* Sky blue */
+    color: white;
+}
+
+canvas {
+    background-color: #000033; /* Dark blue */
+    border: 2px solid white;
+    margin-top: 20px;
+    cursor: pointer;
+}
