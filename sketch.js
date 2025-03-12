@@ -1,9 +1,9 @@
 let diveImg;
 let showImage = false;
-let splashOsc, splashNoise, splashEnv, filter;
+let splashNoise, splashEnv, filter, dripOsc, dripEnv, reverb;
 
 function preload() {
-  diveImg = loadImage('dive.jpg'); // Make sure dive.jpg is in your project root
+  diveImg = loadImage('dive.jpg');
 }
 
 function setup() {
@@ -12,30 +12,37 @@ function setup() {
   textSize(32);
   fill(255);
 
-  // --- Set up sound stuff ---
-  // Envelope for both tone and noise
-  splashEnv = new p5.Envelope();
-  splashEnv.setADSR(0.01, 0.2, 0.1, 0.4);
-  splashEnv.setRange(0.6, 0);
-
-  // Oscillator for tone (FM-like)
-  splashOsc = new p5.Oscillator('sine');
-  splashOsc.freq(600);
-  splashOsc.amp(0);
-  splashOsc.start();
-
-  // White noise for splash texture
+  // Splash noise (main texture)
   splashNoise = new p5.Noise('white');
   splashNoise.amp(0);
   splashNoise.start();
 
-  // Filter to muffle the splash
+  // Filter to shape the splash
   filter = new p5.LowPass();
-  splashOsc.disconnect();  // Disconnect from master output
   splashNoise.disconnect();
-  splashOsc.connect(filter);
   splashNoise.connect(filter);
-  filter.connect(); // Send to output
+  filter.connect();
+
+  // Envelope for splash noise (longer and louder)
+  splashEnv = new p5.Envelope();
+  splashEnv.setADSR(0.01, 0.5, 0.3, 1.2); // Slower release
+  splashEnv.setRange(1, 0);
+
+  // Drip oscillator = body hit / deep splash base
+  dripOsc = new p5.Oscillator('sine');
+  dripOsc.freq(80);
+  dripOsc.amp(0);
+  dripOsc.start();
+
+  // Envelope for drip
+  dripEnv = new p5.Envelope();
+  dripEnv.setADSR(0.01, 0.3, 0, 0.8);
+  dripEnv.setRange(0.5, 0);
+
+  // Reverb to make it echo like a pool
+  reverb = new p5.Reverb();
+  reverb.process(filter, 3, 2); // (input, reverbTime, decayRate)
+  reverb.process(dripOsc, 3, 2);
 }
 
 function draw() {
@@ -50,36 +57,27 @@ function draw() {
 
 function mousePressed() {
   showImage = true;
-  playDiveSound();
+  playSplashSound();
 }
 
-function playDiveSound() {
-  // Reset envelope each time
-  splashEnv.play(splashOsc);
+function playSplashSound() {
+  // Trigger the long splash
   splashEnv.play(splashNoise);
 
-  // Frequency drop over time
-  let startFreq = 600;
-  let endFreq = 100;
-  let duration = 500;
-
+  // Sweeping the filter down over time
+  let duration = 1000;
   let startTime = millis();
 
-  // Modulate the frequency and filter over time (kinda like an LFO sweep)
   let interval = setInterval(() => {
     let t = millis() - startTime;
     let progress = constrain(t / duration, 0, 1);
-
-    // Linear frequency drop
-    let freq = lerp(startFreq, endFreq, progress);
-    splashOsc.freq(freq);
-
-    // Modulate filter cutoff like an LFO sweep
-    let cutoff = 500 + 1000 * sin(progress * PI);
+    let cutoff = lerp(2000, 400, progress); // starts bright, fades to underwater
     filter.freq(cutoff);
 
-    if (progress >= 1) {
-      clearInterval(interval);
-    }
-  }, 16);
+    if (progress >= 1) clearInterval(interval);
+  }, 20);
+
+  // Trigger the deep bloop (underwater boom)
+  dripOsc.freq(random(70, 100));
+  dripEnv.play(dripOsc);
 }
