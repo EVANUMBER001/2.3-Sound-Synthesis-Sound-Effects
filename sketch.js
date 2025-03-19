@@ -3,7 +3,7 @@ let showImage = false;
 let splashNoise, splashEnv, filter, dripOsc, dripEnv, reverb;
 
 function preload() {
-  diveImg = loadImage('dive.jpg');
+  diveImg = loadImage('dive.jpg'); // make sure dive.jpg is in the same folder
 }
 
 function setup() {
@@ -56,9 +56,11 @@ function draw() {
 }
 
 function mousePressed() {
-  userStartAudio(); // 🧠 Unlock the browser's audio context
-  showImage = true;
-  playSplashSound();
+  userStartAudio().then(() => {
+    console.log('Audio context started:', getAudioContext().state);
+    showImage = true;
+    playSplashSound();
+  });
 }
 
 function playSplashSound() {
