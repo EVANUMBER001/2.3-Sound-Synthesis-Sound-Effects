@@ -56,6 +56,7 @@ function draw() {
 }
 
 function mousePressed() {
+  userStartAudio(); // 🧠 Unlock the browser's audio context
   showImage = true;
   playSplashSound();
 }
